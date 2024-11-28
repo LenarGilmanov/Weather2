@@ -100,6 +100,29 @@ class ChessBoard {
             } else return false;
         }
     }
+
+    public boolean castling7() {
+        if (nowPlayer.equals("Black")) {
+            if (board[7][0] == null || board[7][4] == null) return false;
+            if (board[7][0].getColor().equals("R") && board[7][4].getSymbol().equals("K") &&
+                    board[7][1] == null && board[7][2] == null && board[7][3] == null) {
+                if (board[7][0].getColor().equals("Black") && board[7][4].getColor().equals("Black") &&
+                        board[7][0].check && board[7][4].check &&
+                        new King("Black").isUnderAttack(this, 7, 2)) {
+                    board[7][4] = null;
+                    board[7][2] = new King("Black");
+                    board[7][2].check = false;
+                    board[7][0] = null;
+                    board[7][3] = new Rook("Black");
+                    board[7][3].check = false;
+                    nowPlayer = "White";
+                    return true;
+                } else return false;
+            } else return false;
+        } else return false;
+    }
+
+
 }
 
 
@@ -133,7 +156,6 @@ class Horse extends ChessPiece {
         if (toLine < 0 || toLine > 7 || toColumn < 0 || toColumn > 7) return false;
         if (toLine == line && toColumn == column) return false;
         if ((Math.abs(toLine - line) / Math.abs(toColumn - column)) != 2 || ((double) Math.abs(toLine - line) / Math.abs(toColumn - column)) != 0.5) return false;
-//        if (chessBoard[toLine][toColumn].getSymbol() != 0) return false;
         return true;
     }
 
