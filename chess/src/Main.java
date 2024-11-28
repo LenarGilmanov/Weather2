@@ -125,7 +125,6 @@ class ChessBoard {
 
 }
 
-
 //2.7.1
 abstract class ChessPiece {
     String color;
@@ -155,8 +154,12 @@ class Horse extends ChessPiece {
     boolean canMoveToPosition(ChessBoard chessBoard, int line, int column, int toLine, int toColumn) {
         if (toLine < 0 || toLine > 7 || toColumn < 0 || toColumn > 7) return false;
         if (toLine == line && toColumn == column) return false;
-        if ((Math.abs(toLine - line) / Math.abs(toColumn - column)) != 2 || ((double) Math.abs(toLine - line) / Math.abs(toColumn - column)) != 0.5) return false;
-        return true;
+
+        ChessPiece targetPiece = chessBoard.getPiece(toLine, toColumn);
+        if (targetPiece != null && targetPiece.getColor().equals(this.getColor())) return false;
+
+        return (Math.abs(toLine - line) == 2 && Math.abs(toColumn - column) == 1) ||
+                (Math.abs(toLine - line) == 1 && Math.abs(toColumn - column) == 2);
     }
 
     @Override
@@ -170,7 +173,7 @@ class Horse extends ChessPiece {
     }
 }
 
-//2.7.3
+//2.7.3 Пешка
 class Pawn extends ChessPiece {
     public Pawn(String color) {
         super(color);
@@ -181,23 +184,40 @@ class Pawn extends ChessPiece {
         if (toLine < 0 || toLine > 7 || toColumn < 0 || toColumn > 7) return false;
         if (toLine == line && toColumn == column) return false;
 
-        if (this.color.equals("White") && line == 1) {
-            if (toLine != 3 && toLine != 2) return false;
+        ChessPiece targetPiece = chessBoard.getPiece(toLine, toColumn);
+        if (targetPiece != null && targetPiece.getColor().equals(this.getColor())) return false;
+
+        if (this.getColor().equals("White")) {
+            if (toLine == line + 1 && column == toColumn) {
+                if (targetPiece == null) {
+                    return true;
+                }
+            }
+            if (line == 1 && toLine == line + 2 && column == toColumn) {
+                if (targetPiece == null && chessBoard.getPiece(line + 1, column) == null) {
+                    return true;
+                }
+            }
+            if (toLine == line + 1 && Math.abs(column - toColumn) == 1) {
+                return targetPiece != null && !targetPiece.getColor().equals(this.getColor());
+            }
+        } else {
+            if (toLine == line - 1 && column == toColumn) {
+                if (targetPiece == null) {
+                    return true;
+                }
+            }
+            if (line == 6 && toLine == line - 2 && column == toColumn) {
+                if (targetPiece == null && chessBoard.getPiece(line - 1, column) == null) {
+                    return true;
+                }
+            }
+            if (toLine == line - 1 && Math.abs(column - toColumn) == 1) {
+                return targetPiece != null && !targetPiece.getColor().equals(this.getColor());
+            }
         }
 
-        if (this.color.equals("Black") && line == 6) {
-            if (toLine != 5 && toLine != 4) return false;
-        }
-
-        if (this.color.equals("White")) {
-            if (toLine - line != 1) return false;
-        }
-
-        if (this.color.equals("Black")) {
-            if (toLine - line != -1) return false;
-        }
-
-        return true;
+        return false;
     }
 
     @Override
@@ -211,7 +231,7 @@ class Pawn extends ChessPiece {
     }
 }
 
-//2.7.4
+//2.7.4 Слон
 class Bishop extends ChessPiece {
     public Bishop(String color) {
         super(color);
@@ -221,9 +241,26 @@ class Bishop extends ChessPiece {
     boolean canMoveToPosition(ChessBoard chessBoard, int line, int column, int toLine, int toColumn) {
         if (toLine < 0 || toLine > 7 || toColumn < 0 || toColumn > 7) return false;
         if (toLine == line && toColumn == column) return false;
-        if (Math.abs(toLine - line) != Math.abs(toColumn - column)) return false;
 
-        return true;
+        ChessPiece targetPiece = chessBoard.getPiece(toLine, toColumn);
+        if (targetPiece != null && targetPiece.getColor().equals(this.getColor())) return false;
+
+        if (Math.abs(toLine - line) == Math.abs(toColumn - column)) {
+            int rowStep = (toLine - line) > 0 ? 1 : -1;
+            int colStep = (toColumn - column) > 0 ? 1 : -1;
+            int row = line + rowStep;
+            int col = column + colStep;
+            while (row != toLine && col != toColumn) {
+                if (chessBoard.getPiece(row, col) != null) {
+                    return false;
+                }
+                row += rowStep;
+                col += colStep;
+            }
+            return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -237,7 +274,7 @@ class Bishop extends ChessPiece {
     }
 }
 
-//2.7.5
+//2.7.5 Ладья
 class Rook extends ChessPiece {
     public Rook(String color) {
         super(color);
@@ -247,8 +284,31 @@ class Rook extends ChessPiece {
     boolean canMoveToPosition(ChessBoard chessBoard, int line, int column, int toLine, int toColumn) {
         if (toLine < 0 || toLine > 7 || toColumn < 0 || toColumn > 7) return false;
         if (toLine == line && toColumn == column) return false;
-        if ((toLine != line) && (toColumn != column)) return false;
-        return true;
+
+        ChessPiece targetPiece = chessBoard.getPiece(toLine, toColumn);
+        if (targetPiece != null && targetPiece.getColor().equals(this.getColor())) return false;
+
+        if (line == toLine) {
+            int step = column < toColumn ? 1 : -1;
+            for (int col = column + step; col != toColumn; col += step) {
+                if (chessBoard.getPiece(line, col) != null) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        if (column == toColumn) {
+            int step = line < toLine ? 1 : -1;
+            for (int row = line + step; row != toLine; row += step) {
+                if (chessBoard.getPiece(row, column) != null) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -272,11 +332,46 @@ class Queen extends ChessPiece {
     boolean canMoveToPosition(ChessBoard chessBoard, int line, int column, int toLine, int toColumn) {
         if (toLine < 0 || toLine > 7 || toColumn < 0 || toColumn > 7) return false;
         if (toLine == line && toColumn == column) return false;
-        if (toLine != line && toColumn != column) {
-            if (Math.abs(toLine - line) != Math.abs(toColumn - column)) return false;
-        }
 
-        return true;
+        ChessPiece targetPiece = chessBoard.getPiece(toLine, toColumn);
+        if (targetPiece != null && targetPiece.getColor().equals(this.getColor())) return false;
+
+        boolean isDiagonalMove = Math.abs(toLine - line) == Math.abs(toColumn - column);
+        boolean isStraightMove = (line == toLine || column == toColumn);
+
+        if (isDiagonalMove) {
+            int rowStep = (toLine - line) > 0 ? 1 : -1;
+            int colStep = (toColumn - column) > 0 ? 1 : -1;
+            int row = line + rowStep;
+            int col = column + colStep;
+            while (row != toLine && col != toColumn) {
+                if (chessBoard.getPiece(row, col) != null) {
+                    return false;
+                }
+                row += rowStep;
+                col += colStep;
+            }
+            return true;
+        } else if (isStraightMove) {
+            int step;
+            if (line == toLine) {
+                step = column < toColumn ? 1 : -1;
+                for (int col = column + step; col != toColumn; col += step) {
+                    if (chessBoard.getPiece(line, col) != null) {
+                        return false;
+                    }
+                }
+            } else {
+                step = line < toLine ? 1 : -1;
+                for (int row = line + step; row != toLine; row += step) {
+                    if (chessBoard.getPiece(row, column) != null) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -300,6 +395,10 @@ class King extends ChessPiece {
     boolean canMoveToPosition(ChessBoard chessBoard, int line, int column, int toLine, int toColumn) {
         if (toLine < 0 || toLine > 7 || toColumn < 0 || toColumn > 7) return false;
         if (toLine == line && toColumn == column) return false;
+
+        ChessPiece targetPiece = chessBoard.getPiece(toLine, toColumn);
+        if (targetPiece != null && targetPiece.getColor().equals(this.getColor())) return false;
+
         if ((Math.abs(toLine - line) > 1) || Math.abs(toColumn - column) > 1) return false;
         return true;
     }
