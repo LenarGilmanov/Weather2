@@ -1,5 +1,3 @@
-import com.sun.source.tree.IfTree;
-
 import java.util.Scanner;
 
 class ChessBoard {
@@ -16,6 +14,32 @@ class ChessBoard {
 
     public ChessPiece getPiece(int line, int column) {
         return board[line][column];
+    }
+
+    public boolean isKingUnderCheck(String color) {
+        int kingLine = 0;
+        int kingColumn = 0;
+
+        for (int line = 0; line < 8; line++) {
+            for (int column = 0; column < 8; column++) {
+                if ((board[line][column] instanceof King) && (board[line][column].getColor().equals(color))) {
+                    kingLine = line;
+                    kingColumn = column;
+                    break;
+                }
+            }
+        }
+
+        for (int line = 0; line < 8; line++) {
+            for (int column = 0; column < 8; column++) {
+                if ((board[line][column] != null) && !board[line][column].getColor().equals(color)) {
+                    if (board[line][column].canMoveToPosition(this, line, column, kingLine, kingColumn)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public boolean moveToPosition(int startLine, int startColumn, int endLine, int endColumn) {
@@ -70,7 +94,7 @@ class ChessBoard {
                     board[0][1] == null && board[0][2] == null && board[0][3] == null) {
                 if (board[0][0].getColor().equals("White") && board[0][4].getColor().equals("White") &&
                         board[0][0].check && board[0][4].check &&
-                        new King("White").isUnderAttack(this,0,2)) {
+                        !(new King("White").isUnderAttack(this,0,2))) {
                     board[0][4] = null;
                     board[0][2] = new King("White");
                     board[0][2].check = false;
@@ -81,34 +105,18 @@ class ChessBoard {
                     return true;
                 } else return false;
             } else return false;
-        } else {
-            if (board[7][0] == null || board[7][4] == null) return false;
-            if (board[7][0].getColor().equals("R") && board[7][4].getSymbol().equals("K") &&
-                    board[7][1] == null && board[7][2] == null && board[7][3] == null) {
-                if (board[7][0].getColor().equals("Black") && board[7][4].getColor().equals("Black") &&
-                        board[7][0].check && board[7][4].check &&
-                        new King("Black").isUnderAttack(this, 7, 2)) {
-                    board[7][4] = null;
-                    board[7][2] = new King("Black");
-                    board[7][2].check = false;
-                    board[7][0] = null;
-                    board[7][3] = new Rook("Black");
-                    board[7][3].check = false;
-                    nowPlayer = "White";
-                    return true;
-                } else return false;
-            } else return false;
         }
+        return false;
     }
 
     public boolean castling7() {
         if (nowPlayer.equals("Black")) {
             if (board[7][0] == null || board[7][4] == null) return false;
-            if (board[7][0].getColor().equals("R") && board[7][4].getSymbol().equals("K") &&
+            if (board[7][0].getSymbol().equals("R") && board[7][4].getSymbol().equals("K") &&
                     board[7][1] == null && board[7][2] == null && board[7][3] == null) {
                 if (board[7][0].getColor().equals("Black") && board[7][4].getColor().equals("Black") &&
                         board[7][0].check && board[7][4].check &&
-                        new King("Black").isUnderAttack(this, 7, 2)) {
+                        !(new King("Black").isUnderAttack(this, 7, 2))) {
                     board[7][4] = null;
                     board[7][2] = new King("Black");
                     board[7][2].check = false;
@@ -201,7 +209,7 @@ class Pawn extends ChessPiece {
             if (toLine == line + 1 && Math.abs(column - toColumn) == 1) {
                 return targetPiece != null && !targetPiece.getColor().equals(this.getColor());
             }
-        } else {
+        } else {            //Black
             if (toLine == line - 1 && column == toColumn) {
                 if (targetPiece == null) {
                     return true;
@@ -401,6 +409,8 @@ class King extends ChessPiece {
 
         if ((Math.abs(toLine - line) > 1) || Math.abs(toColumn - column) > 1) return false;
         return true;
+
+//        boolean canMove = this.isUnderAttack(chessBoard, toLine, toColumn);
     }
 
     @Override
@@ -474,6 +484,9 @@ public class Main {
         ChessBoard board = buildBoard();
         
         Scanner scanner = new Scanner(System.in);
+
+
+
         System.out.println("""
                Чтобы проверить игру надо вводить команды:
                'exit' - для выхода
@@ -484,6 +497,7 @@ public class Main {
         System.out.println();
         board.printBoard();
         while (true) {
+            if (board.isKingUnderCheck(board.nowPlayer)) System.out.println("ШАХ");
             String s = scanner.nextLine();
             if (s.equals("exit")) break;
             else if (s.equals("replay")) {
